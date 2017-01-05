@@ -46,10 +46,68 @@ public class Server extends Node {
 	 */
 	public synchronized void onReceipt(DatagramPacket packet) {
 		try {
+			if (packet == null)
+				return;
+			
+			PacketContent content = PacketContent.fromDatagramPacket(packet);
+			switch (content.header.getPacketType()) {
+			case NEW_ROUTER:
+				onRecNewRouter();
+				break;
+			case NEW_CLIENT:
+				onRecNewClient();
+				break;
+			case PING:
+				onRecPing();
+				break;
+			case LS_UPDATE:
+				onRecLsUpdate();
+				break;
+			case DV_UPDATE:
+				onRecDvUpdate();
+				break;
+			case TO_TYPE:
+				onRecToType();
+				break;
+			case REGULAR:
+				onRecRegular();
+				break;
+			default:
+				break;
+			
+			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private void onRecNewRouter() {
+		
+	}
+	
+	private void onRecNewClient() {
+		System.out.println("New Client!");
+	}
+	
+	private void onRecPing() {
+		
+	}
+	
+	private void onRecLsUpdate() {
+		
+	}
+	
+	private void onRecDvUpdate() {
+		
+	}
+	
+	private void onRecToType() {
+		
+	}
+	
+	private void onRecRegular() {
+		
 	}
 
 	public synchronized void start() throws Exception {

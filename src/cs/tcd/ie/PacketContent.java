@@ -56,10 +56,12 @@ public abstract class PacketContent {
 					packetType = PacketType.REGULAR;
 				}
 				
-				src = InetAddress.getByAddress((byte[]) oin.readObject());
+//				src = InetAddress.getByAddress((byte[]) oin.readObject());
+				src = InetAddress.getByName(oin.readUTF());
 				clientName = oin.readUTF();
 				familyName = oin.readUTF();
-				dst = InetAddress.getByAddress((byte[]) oin.readObject());
+//				dst = InetAddress.getByAddress((byte[]) oin.readObject());
+				dst = InetAddress.getByName(oin.readUTF());
 				
 				int dsType = oin.readInt();
 				if (dsType == DeviceType.CLIENT.ordinal()) {
@@ -129,22 +131,24 @@ public abstract class PacketContent {
 		 */
 		protected void toObjectOutputStream(ObjectOutputStream oout) {
 			try {
-				if (packetType != null)
+				if (packetType == null)
 					packetType = PacketType.REGULAR;
 				oout.writeInt(packetType.ordinal());
-				if (src != null)
+				if (src == null)
 					src = InetAddress.getByName("localhost");
-				oout.write(src.getAddress());
-				if (clientName != null)
+//				oout.write(src.getAddress());
+				oout.writeUTF(src.getHostAddress());
+				if (clientName == null)
 					clientName = "null";
 				oout.writeUTF(clientName);
-				if (familyName != null)
+				if (familyName == null)
 					familyName = "null";
 				oout.writeUTF(familyName);
-				if (dst != null)
+				if (dst == null)
 					dst = InetAddress.getByName("localhost");
-				oout.write(dst.getAddress());
-				if (dstType != null)
+//				oout.write(dst.getAddress());
+				oout.writeUTF(dst.getHostAddress());
+				if (dstType == null)
 					dstType = DeviceType.CLIENT;
 				oout.writeInt(dstType.ordinal());
 			} catch (Exception e) {
@@ -218,20 +222,20 @@ public abstract class PacketContent {
 			bin = new ByteArrayInputStream(data);
 			oin = new ObjectInputStream(bin);
 			
-			Header header = content.new Header (oin);
+//			Header header = content.new Header (oin);
+			final int type = oin.readInt();
+			
 
-			switch (header.packetType) { // depending on type create content object
-			case NEW_CLIENT:
+			if (type == PacketType.NEW_CLIENT.ordinal()) {
 				content = new NewClientContent(oin);
-				break;
-			case NEW_ROUTER:
+			} else if (type == PacketType.NEW_ROUTER.ordinal()) {
 				content = new NewRouterContent(oin);
-				break;
-			// TODO: Add additional packet types
-			default:
+			} else {
 				content = null;
-				break;
 			}
+			// TODO: Add additional packet types
+			
+			
 			oin.close();
 			bin.close();
 
