@@ -83,6 +83,7 @@ public class Client extends Node {
 		PacketContent init = new NewClientContent();
 		init.header.setPacketType(PacketType.NEW_CLIENT);
 		init.header.setSrc(this.clientIP);
+		init.header.setSrcPort(this.clientPort);
 		init.header.setDst(routerIP);
 		init.header.setDstType(DeviceType.ROUTER);
 		init.header.setClientName(clientName);

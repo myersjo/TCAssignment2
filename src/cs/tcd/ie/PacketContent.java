@@ -28,6 +28,7 @@ public abstract class PacketContent {
 		private PacketType packetType;
 		// source info
 		private InetAddress src;
+		private int srcPort;
 		private String clientName;
 		private String familyName;
 		// destination info
@@ -37,7 +38,7 @@ public abstract class PacketContent {
 		protected Header() {
 		}
 
-		protected Header (ObjectInputStream oin) {
+		protected Header(ObjectInputStream oin) {
 			try {
 				int type = oin.readInt();
 				if (type == PacketType.NEW_ROUTER.ordinal()) {
@@ -55,14 +56,15 @@ public abstract class PacketContent {
 				} else if (type == PacketType.REGULAR.ordinal()) {
 					packetType = PacketType.REGULAR;
 				}
-				
-//				src = InetAddress.getByAddress((byte[]) oin.readObject());
+
+				// src = InetAddress.getByAddress((byte[]) oin.readObject());
 				src = InetAddress.getByName(oin.readUTF());
+				srcPort = oin.readInt();
 				clientName = oin.readUTF();
 				familyName = oin.readUTF();
-//				dst = InetAddress.getByAddress((byte[]) oin.readObject());
+				// dst = InetAddress.getByAddress((byte[]) oin.readObject());
 				dst = InetAddress.getByName(oin.readUTF());
-				
+
 				int dsType = oin.readInt();
 				if (dsType == DeviceType.CLIENT.ordinal()) {
 					dstType = DeviceType.CLIENT;
@@ -73,8 +75,9 @@ public abstract class PacketContent {
 				} else if (dsType == DeviceType.TV.ordinal()) {
 					dstType = DeviceType.TV;
 				}
-			} 
-			catch(Exception e) {e.printStackTrace();}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 
 		public PacketType getPacketType() {
@@ -91,6 +94,14 @@ public abstract class PacketContent {
 
 		public void setSrc(InetAddress src) {
 			this.src = src;
+		}
+
+		public int getSrcPort() {
+			return srcPort;
+		}
+
+		public void setSrcPort(int port) {
+			this.srcPort = port;
 		}
 
 		public String getClientName() {
@@ -127,6 +138,7 @@ public abstract class PacketContent {
 
 		/**
 		 * If values are null, they are set to a default value
+		 * 
 		 * @param oout
 		 */
 		protected void toObjectOutputStream(ObjectOutputStream oout) {
@@ -136,8 +148,9 @@ public abstract class PacketContent {
 				oout.writeInt(packetType.ordinal());
 				if (src == null)
 					src = InetAddress.getByName("localhost");
-//				oout.write(src.getAddress());
+				// oout.write(src.getAddress());
 				oout.writeUTF(src.getHostAddress());
+				oout.writeInt(srcPort);
 				if (clientName == null)
 					clientName = "null";
 				oout.writeUTF(clientName);
@@ -146,7 +159,7 @@ public abstract class PacketContent {
 				oout.writeUTF(familyName);
 				if (dst == null)
 					dst = InetAddress.getByName("localhost");
-//				oout.write(dst.getAddress());
+				// oout.write(dst.getAddress());
 				oout.writeUTF(dst.getHostAddress());
 				if (dstType == null)
 					dstType = DeviceType.CLIENT;
@@ -206,6 +219,7 @@ public abstract class PacketContent {
 
 	/**
 	 * Constructs an object from a datagram packet
+	 * 
 	 * @param packet
 	 * @return
 	 */
@@ -221,10 +235,9 @@ public abstract class PacketContent {
 			data = packet.getData(); // use packet content as seed for stream
 			bin = new ByteArrayInputStream(data);
 			oin = new ObjectInputStream(bin);
-			
-//			Header header = content.new Header (oin);
+
+			// Header header = content.new Header (oin);
 			final int type = oin.readInt();
-			
 
 			if (type == PacketType.NEW_CLIENT.ordinal()) {
 				content = new NewClientContent(oin);
@@ -234,8 +247,7 @@ public abstract class PacketContent {
 				content = null;
 			}
 			// TODO: Add additional packet types
-			
-			
+
 			oin.close();
 			bin.close();
 

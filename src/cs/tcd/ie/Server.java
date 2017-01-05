@@ -7,6 +7,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import tcdIO.Terminal;
 
@@ -18,23 +20,32 @@ public class Server extends Node {
 	InetAddress routerIP;
 	int routerPort;
 	String familyName;
-	ArrayList<InetSocketAddress> connectedClients;
-	ArrayList<InetSocketAddress> connectedRouters; // neighbours (directly
+//	ArrayList<InetSocketAddress> connectedClients;
+	HashMap<InetSocketAddress, String> connectedClients = new HashMap<InetSocketAddress, String>();
+//	ArrayList<InetSocketAddress> connectedRouters; // neighbours (directly
 													// connected routers only)
+	HashMap<InetSocketAddress, String> connectedRouters = new HashMap<InetSocketAddress, String>();
 
 	boolean initialised = false;
 
 	/*
 	 * 
 	 */
-	Server(Terminal terminal, String ownIP, int ownPort, String familyName, ArrayList<InetSocketAddress> neighbours) {
+	// ArrayList<InetSocketAddress> neighbours
+	Server(Terminal terminal, String ownIP, int ownPort, String familyName, HashMap<InetSocketAddress, String> neighbours) {
 		try {
 			this.terminal = terminal;
 			socket = new DatagramSocket(ownPort);
 			this.routerIP = InetAddress.getByName(ownIP);
 			this.routerPort = ownPort;
 			this.familyName = familyName;
-			this.connectedRouters = neighbours;
+			if (neighbours==null)
+//				connectedRouters = new ArrayList<InetSocketAddress>();
+				connectedRouters = new HashMap<InetSocketAddress, String>();
+			else
+				this.connectedRouters = neighbours;
+//			this.connectedClients = new ArrayList<InetSocketAddress>();
+			this.connectedClients = new HashMap<InetSocketAddress, String>();
 			listener.go();
 		} catch (java.lang.Exception e) {
 			e.printStackTrace();
@@ -52,25 +63,25 @@ public class Server extends Node {
 			PacketContent content = PacketContent.fromDatagramPacket(packet);
 			switch (content.header.getPacketType()) {
 			case NEW_ROUTER:
-				onRecNewRouter();
+				onRecNewRouter(packet);
 				break;
 			case NEW_CLIENT:
-				onRecNewClient();
+				onRecNewClient(packet);
 				break;
 			case PING:
-				onRecPing();
+				onRecPing(packet);
 				break;
 			case LS_UPDATE:
-				onRecLsUpdate();
+				onRecLsUpdate(packet);
 				break;
 			case DV_UPDATE:
-				onRecDvUpdate();
+				onRecDvUpdate(packet);
 				break;
 			case TO_TYPE:
-				onRecToType();
+				onRecToType(packet);
 				break;
 			case REGULAR:
-				onRecRegular();
+				onRecRegular(packet);
 				break;
 			default:
 				break;
@@ -82,31 +93,41 @@ public class Server extends Node {
 		}
 	}
 	
-	private void onRecNewRouter() {
+	private void onRecNewRouter(DatagramPacket packet) {
+		// TODO: Send return packet with this router's name
+	}
+	
+	private void onRecNewClient(DatagramPacket packet) {
+		PacketContent content = PacketContent.fromDatagramPacket(packet);
+		System.out.println("New Client: " + content.header.getClientName() + "\tIP: " + content.header.getSrc().toString()
+				+ "\t" + packet.getAddress().toString() + ":" + packet.getPort()
+				+ "\t" + content.header.getSrc().toString() + ":" + content.header.getSrcPort());
+		connectedClients.put((new InetSocketAddress(content.header.getSrc(), content.header.getSrcPort())), content.header.getFamilyName());
+		
+		System.out.println("************ Connected Clients ************");
+		for (Map.Entry<InetSocketAddress, String> client : connectedClients.entrySet()) {
+			System.out.println("Address : " + client.getKey() + "\tName: " + client.getValue());
+		}
+		System.out.println("************ ***************** ************");
+	}
+	
+	private void onRecPing(DatagramPacket packet) {
 		
 	}
 	
-	private void onRecNewClient() {
-		System.out.println("New Client!");
-	}
-	
-	private void onRecPing() {
+	private void onRecLsUpdate(DatagramPacket packet) {
 		
 	}
 	
-	private void onRecLsUpdate() {
+	private void onRecDvUpdate(DatagramPacket packet) {
 		
 	}
 	
-	private void onRecDvUpdate() {
+	private void onRecToType(DatagramPacket packet) {
 		
 	}
 	
-	private void onRecToType() {
-		
-	}
-	
-	private void onRecRegular() {
+	private void onRecRegular(DatagramPacket packet) {
 		
 	}
 
@@ -126,19 +147,25 @@ public class Server extends Node {
 	 */
 	private void initialise() throws IOException {
 		if (!connectedRouters.isEmpty()) {
-			for (InetSocketAddress connectedRouter : connectedRouters) {
+//			for (InetSocketAddress connectedRouter : connectedRouters) {
+			System.out.println("************ Connected Routers ************");
+			for (Map.Entry<InetSocketAddress, String> connectedRouter : connectedRouters.entrySet()) {
 				PacketContent init = new NewRouterContent();
 				init.header.setPacketType(PacketType.NEW_ROUTER);
 				init.header.setSrc(this.routerIP);
-				init.header.setDst(connectedRouter.getAddress());
+				init.header.setDst(connectedRouter.getKey().getAddress());
 				init.header.setDstType(DeviceType.ROUTER);
 				init.header.setFamilyName(familyName);
 				DatagramPacket packet = init.toDatagramPacket();
-				packet.setAddress(connectedRouter.getAddress());
-				packet.setPort(connectedRouter.getPort());
+				packet.setAddress(connectedRouter.getKey().getAddress());
+				packet.setPort(connectedRouter.getKey().getPort());
 				socket.send(packet);
+				
+				System.out.println("Address: " + connectedRouter.getKey() + "\tName: " + connectedRouter.getValue());
 			}
+			System.out.println("************ ***************** ************");
 		}
+		
 		// TODO: add neighbour routers to routing table
 		// TODO: initiate routing protocol
 	}
@@ -153,7 +180,8 @@ public class Server extends Node {
 		try {
 			Terminal terminal = new Terminal("Router (Server) - " + args[2]);
 			// (new Server(terminal, DEFAULT_PORT)).start();
-			ArrayList<InetSocketAddress> neighbours = new ArrayList<InetSocketAddress>();
+//			ArrayList<InetSocketAddress> neighbours = new ArrayList<InetSocketAddress>();
+			HashMap<InetSocketAddress, String> neighbours = new HashMap<InetSocketAddress, String>();
 			if (args.length < 3) {
 				System.err.println("ERROR: Incorrect Command line Parameters. "
 						+ "\nParameters: <Own IP> <Own port> <Own family name> [<Router IP> <Router port> ...]"
@@ -161,7 +189,7 @@ public class Server extends Node {
 				System.exit(1);
 			} else if (args.length >= 4) {
 				for (int i = 3; i < args.length; i += 2) {
-					neighbours.add((new InetSocketAddress(args[i], Integer.parseInt(args[i + 1]))));
+					neighbours.put((new InetSocketAddress(args[i], Integer.parseInt(args[i + 1]))), null);
 				}
 			}
 			(new Server(terminal, args[0], Integer.parseInt(args[1]), args[2], neighbours)).start();
