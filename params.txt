@@ -1,0 +1,11 @@
+Servers
+========
+localhost 50001 Burke
+localhost 50002 Walsh localhost 50001
+
+
+Clients
+========
+10.0.0.1 50000 Alice localhost 50001
+10.0.0.2 50003 Bob localhost 50002
+10.0.0.3 50004 Aoife localhost 50001
