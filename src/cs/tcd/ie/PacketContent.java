@@ -34,6 +34,7 @@ public abstract class PacketContent {
 		// destination info
 		private InetAddress dst;
 		private DeviceType dstType;
+		private String dstName;
 
 		protected Header() {
 		}
@@ -41,7 +42,9 @@ public abstract class PacketContent {
 		protected Header(ObjectInputStream oin) {
 			try {
 				int type = oin.readInt();
-				if (type == PacketType.NEW_ROUTER.ordinal()) {
+				if (type == PacketType.NEW_ROUTER_REPLY.ordinal()) {
+					packetType = PacketType.NEW_ROUTER_REPLY;
+				} else if (type == PacketType.NEW_ROUTER.ordinal()) {
 					packetType = PacketType.NEW_ROUTER;
 				} else if (type == PacketType.NEW_CLIENT.ordinal()) {
 					packetType = PacketType.NEW_CLIENT;
@@ -75,6 +78,8 @@ public abstract class PacketContent {
 				} else if (dsType == DeviceType.TV.ordinal()) {
 					dstType = DeviceType.TV;
 				}
+				dstName = oin.readUTF();
+
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -136,6 +141,14 @@ public abstract class PacketContent {
 			this.dstType = dstType;
 		}
 
+		public String getDstName() {
+			return this.dstName;
+		}
+
+		public void setDstName(String name) {
+			this.dstName = name;
+		}
+
 		/**
 		 * If values are null, they are set to a default value
 		 * 
@@ -164,6 +177,9 @@ public abstract class PacketContent {
 				if (dstType == null)
 					dstType = DeviceType.CLIENT;
 				oout.writeInt(dstType.ordinal());
+				if (dstName == null)
+					dstName = "null";
+				oout.writeUTF(dstName);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -243,6 +259,8 @@ public abstract class PacketContent {
 				content = new NewClientContent(oin);
 			} else if (type == PacketType.NEW_ROUTER.ordinal()) {
 				content = new NewRouterContent(oin);
+			} else if (type == PacketType.NEW_ROUTER_REPLY.ordinal()) {
+				content = new NewRouterReplyContent(oin);
 			} else {
 				content = null;
 			}
