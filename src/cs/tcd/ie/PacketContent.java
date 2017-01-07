@@ -69,8 +69,10 @@ public abstract class PacketContent {
 				dst = InetAddress.getByName(oin.readUTF());
 
 				int dsType = oin.readInt();
-				if (dsType == DeviceType.CLIENT.ordinal()) {
+				if (dsType == DeviceType.CLIENT.ordinal()) {  // TODO: Remove client type
 					dstType = DeviceType.CLIENT;
+				} else if (dsType == DeviceType.PC.ordinal()) {
+					dstType = DeviceType.PC;
 				} else if (dsType == DeviceType.ROUTER.ordinal()) {
 					dstType = DeviceType.ROUTER;
 				} else if (dsType == DeviceType.FRIDGE.ordinal()) {
@@ -175,7 +177,7 @@ public abstract class PacketContent {
 				// oout.write(dst.getAddress());
 				oout.writeUTF(dst.getHostAddress());
 				if (dstType == null)
-					dstType = DeviceType.CLIENT;
+					dstType = DeviceType.PC;
 				oout.writeInt(dstType.ordinal());
 				if (dstName == null)
 					dstName = "null";
@@ -261,6 +263,10 @@ public abstract class PacketContent {
 				content = new NewRouterContent(oin);
 			} else if (type == PacketType.NEW_ROUTER_REPLY.ordinal()) {
 				content = new NewRouterReplyContent(oin);
+			} else if (type == PacketType.REGULAR.ordinal()) {
+				content = new RegularMessageContent(oin);
+			} else if (type == PacketType.TO_TYPE.ordinal()){
+				content = new ToTypeMessageContent(oin);
 			} else {
 				content = null;
 			}

@@ -1,5 +1,5 @@
 package cs.tcd.ie;
 
 public enum DeviceType {
-	CLIENT, ROUTER, FRIDGE, TV
+	CLIENT, PC, ROUTER, FRIDGE, TV
 }

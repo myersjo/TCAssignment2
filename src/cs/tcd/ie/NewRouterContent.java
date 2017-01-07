@@ -17,8 +17,9 @@ public class NewRouterContent extends PacketContent {
 	protected void toObjectOutputStream(ObjectOutputStream oout) {
 		try {
 			header.toObjectOutputStream(oout);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		catch(Exception e) {e.printStackTrace();}
 	}
 
 }

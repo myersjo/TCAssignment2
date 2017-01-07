@@ -28,6 +28,7 @@ public class Client extends Node {
 	InetAddress clientIP;
 	int clientPort;
 	String clientName;
+	DeviceType type;
 	InetAddress routerIP;
 	int routerPort;
 
@@ -39,7 +40,7 @@ public class Client extends Node {
 	 * Attempts to create socket at given port and create an InetSocketAddress
 	 * for the destinations
 	 */
-	Client(Terminal terminal, String ownIP, int ownPort, String ownName, String routerIP, int routerPort) {
+	Client(Terminal terminal, String ownIP, int ownPort, String ownName, String routerIP, int routerPort, String type) {
 		try {
 			this.terminal = terminal;
 			socket = new DatagramSocket(ownPort);
@@ -48,6 +49,22 @@ public class Client extends Node {
 			this.clientName = ownName;
 			this.routerIP = InetAddress.getByName(routerIP);
 			this.routerPort = routerPort;
+
+			if (type.toUpperCase().equals("PC"))
+				this.type = DeviceType.PC;
+			else if (type.toUpperCase().equals("TV") || type.toUpperCase().equals("TELEVISION")
+					|| type.toUpperCase().equals("TELLY"))
+				this.type = DeviceType.TV;
+			else if (type.toUpperCase().equals("FRIDGE"))
+				this.type = DeviceType.FRIDGE;
+			else if (type.toUpperCase().equals("ROUTER")) {
+				System.err.println("Please use the Server application for routers.");
+				System.exit(1);
+			} else {
+				System.err.println(type + " is not a supported device type. Supported Devices: \n\t" + DeviceType.PC
+						+ "\n\t" + DeviceType.TV + "\n\t" + DeviceType.FRIDGE);
+				System.exit(1);
+			}
 			initialised = false;
 			listener.go();
 		} catch (java.lang.Exception e) {
@@ -56,14 +73,65 @@ public class Client extends Node {
 	}
 
 	/**
+	 * Device type defaults to PC if no type is specified
+	 * 
+	 * @param terminal
+	 * @param ownIP
+	 * @param ownPort
+	 * @param ownName
+	 * @param routerIP
+	 * @param routerPort
+	 */
+	Client(Terminal terminal, String ownIP, int ownPort, String ownName, String routerIP, int routerPort) {
+		this(terminal, ownIP, ownPort, ownName, routerIP, routerPort, "PC");
+	}
+
+	/**
 	 * Assume that incoming packets contain a String and print the string.
 	 */
 	public synchronized void onReceipt(DatagramPacket packet) {
-
 		try {
+			if (packet == null)
+				return;
 
+			PacketContent content = PacketContent.fromDatagramPacket(packet);
+			System.out.println("Client onReceipt: " + content.header.getPacketType() + " from: "
+					+ ((content.header.getFamilyName() == null) ? content.header.getClientName()
+							: content.header.getFamilyName()));
+
+			switch (content.header.getPacketType()) {
+			case PING:
+				onRecPing(packet);
+				break;
+			case TO_TYPE:
+				onRecToType(packet);
+				break;
+			case REGULAR:
+				onRecRegular(packet);
+				break;
+			default:
+				break;
+			}
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+	private void onRecPing(DatagramPacket packet) {
+
+	}
+
+	private void onRecToType(DatagramPacket packet) {
+		onRecRegular(packet);
+	}
+
+	private void onRecRegular(DatagramPacket packet) {
+		try {
+			RegularMessageContent content = (RegularMessageContent) PacketContent.fromDatagramPacket(packet);
+			terminal.print(content.header.getClientName() + ": " + content.getMessage());
+			this.send();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -71,12 +139,86 @@ public class Client extends Node {
 	 * Sender Method
 	 * 
 	 */
+
+	private synchronized void send() throws Exception {
+		while (true) {
+			String input = terminal.readString().trim();
+			if (input.length() > 0) {
+				String[] clientMessageString = input.split("-", 2);
+				String client = clientMessageString[0].trim();
+				String[] clientNames = client.split(":", 2);
+				if (clientNames.length <2 || clientMessageString.length < 2) {
+					terminal.println("Invalid input.\n" + getInstructions());
+					break;
+				}
+				String familyName = clientNames[0].trim();
+				String clientName = clientNames[1].trim();
+				String message = clientMessageString[1].trim();
+
+				PacketType packetType;
+				if (familyName.toUpperCase().equals("*")) {
+					packetType = PacketType.TO_TYPE;
+				} else
+					packetType = PacketType.REGULAR;
+
+				if (packetType == PacketType.TO_TYPE) {
+					ToTypeMessageContent content = new ToTypeMessageContent();
+					content.header.setPacketType(packetType);
+					content.header.setSrc(clientIP);
+					content.header.setSrcPort(clientPort);
+					content.header.setClientName(clientName);
+
+					switch (clientName.toUpperCase()) {
+					case "FRIDGE":
+						content.header.setDstType(DeviceType.FRIDGE);
+						break;
+					case "TV":
+						content.header.setDstType(DeviceType.TV);
+						break;
+					default:
+						break;
+					}
+					content.setMessage(message);
+					DatagramPacket packet = content.toDatagramPacket();
+					packet.setAddress(routerIP);
+					packet.setPort(routerPort);
+					socket.send(packet);
+				} else {
+					RegularMessageContent content = new RegularMessageContent();
+					content.header.setPacketType(packetType);
+//					System.out.println(packetType.toString());
+					content.header.setSrc(clientIP);
+					content.header.setSrcPort(clientPort);
+					content.header.setClientName(clientName);
+					content.header.setFamilyName(familyName);
+					content.header.setDstType(DeviceType.PC);
+
+					content.setMessage(message);
+					DatagramPacket packet = content.toDatagramPacket();
+					packet.setAddress(routerIP);
+					packet.setPort(routerPort);
+					socket.send(packet);
+				}
+			}
+			this.wait(100);
+		}
+		send();
+	}
+
 	public synchronized void start() throws Exception {
 		if (!initialised) {
 			initialiseRouterConnection();
 			initialised = true;
+			terminal.println(getInstructions());
 		}
-
+		this.send();
+	}
+	
+	private String getInstructions () {
+		String instructions = "To send a message to a user, enter the recipients name in the form \" [familyName] : [clientName] \", followed by \" - \" (without quotes). "
+				+ "\nTo send a message to all devices of a specific type, enter the type in the form \" * : [type] \" followed by \" - \" (without quotes)."
+				+ "\nTo send a message to all users associated with a router, enter the name in the form \" [familyName] : * \", followed by \" - \" (without quotes)";
+		return instructions;
 	}
 
 	private void initialiseRouterConnection() throws IOException {
@@ -95,7 +237,7 @@ public class Client extends Node {
 
 	/**
 	 * Initialise client; Cmd line args: Own IP, Own port, Own name, Router IP,
-	 * 	Router port
+	 * Router port
 	 */
 	public static void main(String[] args) {
 		try {

@@ -57,8 +57,9 @@ public class Server extends Node {
 				return;
 
 			PacketContent content = PacketContent.fromDatagramPacket(packet);
-			System.out.println(
-					"Server onReceipt: " + content.header.getPacketType() + " from: " + content.header.getFamilyName());
+			System.out.println("Server onReceipt: " + content.header.getPacketType() + " from: "
+					+ ((content.header.getFamilyName() == null) ? content.header.getClientName()
+							: content.header.getFamilyName()));
 
 			switch (content.header.getPacketType()) {
 			case NEW_ROUTER_REPLY:
@@ -97,6 +98,7 @@ public class Server extends Node {
 	/**
 	 * Adds the src router to connectedRouters and removes it from the
 	 * pendingRouters list
+	 * 
 	 * @param packet
 	 */
 	private void onRecNewRouterReply(DatagramPacket packet) {
@@ -116,6 +118,7 @@ public class Server extends Node {
 
 	/**
 	 * Adds the new router to the connectedRouters list and sends a response
+	 * 
 	 * @param packet
 	 * @throws IOException
 	 */
@@ -145,6 +148,7 @@ public class Server extends Node {
 
 	/**
 	 * Adds the new client to the connectedClients list
+	 * 
 	 * @param packet
 	 */
 	private void onRecNewClient(DatagramPacket packet) {
@@ -172,11 +176,15 @@ public class Server extends Node {
 	}
 
 	private void onRecToType(DatagramPacket packet) {
-
+		// add family name as this.familyName
 	}
 
 	private void onRecRegular(DatagramPacket packet) {
-
+		System.out.println("At onRecRegular() in server");
+		// if from a connected client, add dst IP and port. Then check below
+		// condition
+		// if client name is * and familyName == this.FamilyName, send to all
+		// connected clients
 	}
 
 	public synchronized void start() throws Exception {
@@ -212,6 +220,7 @@ public class Server extends Node {
 
 	/**
 	 * Sends 'new router' handshake to all directly connected routers
+	 * 
 	 * @throws IOException
 	 */
 	private void initialise() throws IOException {
@@ -242,6 +251,7 @@ public class Server extends Node {
 	/**
 	 * Initialise router; Cmd line args: Own IP, Own port, Own family name, zero
 	 * or more connected routers (IP address, port)
+	 * 
 	 * @param args
 	 */
 	public static void main(String[] args) {
