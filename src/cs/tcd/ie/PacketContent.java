@@ -69,7 +69,8 @@ public abstract class PacketContent {
 				dst = InetAddress.getByName(oin.readUTF());
 
 				int dsType = oin.readInt();
-				if (dsType == DeviceType.CLIENT.ordinal()) {  // TODO: Remove client type
+				if (dsType == DeviceType.CLIENT.ordinal()) { // TODO: Remove
+																// client type
 					dstType = DeviceType.CLIENT;
 				} else if (dsType == DeviceType.PC.ordinal()) {
 					dstType = DeviceType.PC;
@@ -143,10 +144,20 @@ public abstract class PacketContent {
 			this.dstType = dstType;
 		}
 
+		/**
+		 * Format: [familyName]:[clientName]; * for [familyName] sends to all
+		 * devices of type [clientName]; * for [clientName] sends to all clients
+		 * connected to router [familyName]
+		 */
 		public String getDstName() {
 			return this.dstName;
 		}
 
+		/**
+		 * Format: [familyName]:[clientName]; * for [familyName] sends to all
+		 * devices of type [clientName]; * for [clientName] sends to all clients
+		 * connected to router [familyName]
+		 */
 		public void setDstName(String name) {
 			this.dstName = name;
 		}
@@ -167,10 +178,10 @@ public abstract class PacketContent {
 				oout.writeUTF(src.getHostAddress());
 				oout.writeInt(srcPort);
 				if (clientName == null)
-					clientName = "null";
+					clientName = "";
 				oout.writeUTF(clientName);
 				if (familyName == null)
-					familyName = "null";
+					familyName = "";
 				oout.writeUTF(familyName);
 				if (dst == null)
 					dst = InetAddress.getByName("localhost");
@@ -180,7 +191,7 @@ public abstract class PacketContent {
 					dstType = DeviceType.PC;
 				oout.writeInt(dstType.ordinal());
 				if (dstName == null)
-					dstName = "null";
+					dstName = "";
 				oout.writeUTF(dstName);
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -265,7 +276,7 @@ public abstract class PacketContent {
 				content = new NewRouterReplyContent(oin);
 			} else if (type == PacketType.REGULAR.ordinal()) {
 				content = new RegularMessageContent(oin);
-			} else if (type == PacketType.TO_TYPE.ordinal()){
+			} else if (type == PacketType.TO_TYPE.ordinal()) {
 				content = new ToTypeMessageContent(oin);
 			} else {
 				content = null;

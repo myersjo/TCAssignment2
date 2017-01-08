@@ -7,6 +7,8 @@ import java.io.ObjectOutputStream;
 public class RegularMessageContent extends PacketContent {
 
 	private String message;
+	private String dstFamilyName;
+	private String dstClientName;
 
 	public RegularMessageContent() {
 	}
@@ -15,6 +17,8 @@ public class RegularMessageContent extends PacketContent {
 		this.header = new Header(oin);
 		try {
 			this.setMessage(oin.readUTF());
+			this.setDstFamilyName(oin.readUTF());
+			this.setDstClientName(oin.readUTF());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -25,6 +29,8 @@ public class RegularMessageContent extends PacketContent {
 		try {
 			header.toObjectOutputStream(oout);
 			oout.writeUTF(getMessage());
+			oout.writeUTF(getDstFamilyName());
+			oout.writeUTF(getDstClientName());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -36,6 +42,22 @@ public class RegularMessageContent extends PacketContent {
 
 	public void setMessage(String message) {
 		this.message = message;
+	}
+
+	public String getDstFamilyName() {
+		return dstFamilyName;
+	}
+
+	public void setDstFamilyName(String dstFamilyName) {
+		this.dstFamilyName = dstFamilyName;
+	}
+
+	public String getDstClientName() {
+		return dstClientName;
+	}
+
+	public void setDstClientName(String dstClientName) {
+		this.dstClientName = dstClientName;
 	}
 
 }

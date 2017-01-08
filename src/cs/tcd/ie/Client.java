@@ -122,7 +122,9 @@ public class Client extends Node {
 	}
 
 	private void onRecToType(DatagramPacket packet) {
-		onRecRegular(packet);
+		PacketContent content = PacketContent.fromDatagramPacket(packet);
+		if (content.header.getDstType() == this.type)
+			onRecRegular(packet);
 	}
 
 	private void onRecRegular(DatagramPacket packet) {
@@ -156,7 +158,8 @@ public class Client extends Node {
 				String message = clientMessageString[1].trim();
 
 				PacketType packetType;
-				if (familyName.toUpperCase().equals("*")) {
+//				System.out.println(familyName + ":" + clientName);
+				if ( familyName.length() <= 2 && familyName.substring(0, 1).equals("*")) {
 					packetType = PacketType.TO_TYPE;
 				} else
 					packetType = PacketType.REGULAR;
@@ -190,9 +193,12 @@ public class Client extends Node {
 					content.header.setSrc(clientIP);
 					content.header.setSrcPort(clientPort);
 					content.header.setClientName(clientName);
-					content.header.setFamilyName(familyName);
+//					content.header.setFamilyName(familyName); set by router
 					content.header.setDstType(DeviceType.PC);
-
+					content.header.setDstName(client);
+					content.setDstClientName(clientName);
+					content.setDstFamilyName(familyName);
+					
 					content.setMessage(message);
 					DatagramPacket packet = content.toDatagramPacket();
 					packet.setAddress(routerIP);

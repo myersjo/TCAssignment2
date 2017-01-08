@@ -28,6 +28,8 @@ public class Server extends Node {
 													// have not replied
 	boolean initialised;
 
+	ArrayList<RoutingTableEntry> routingTable;
+
 	Server(Terminal terminal, String ownIP, int ownPort, String familyName, ArrayList<InetSocketAddress> neighbours) {
 		try {
 			this.terminal = terminal;
@@ -41,6 +43,7 @@ public class Server extends Node {
 				this.pendingRouters = neighbours;
 			this.connectedClients = new HashMap<String, InetSocketAddress>();
 			this.connectedRouters = new HashMap<String, InetSocketAddress>();
+			routingTable = new ArrayList<RoutingTableEntry>();
 			initialised = false;
 			listener.go();
 		} catch (java.lang.Exception e) {
@@ -106,7 +109,7 @@ public class Server extends Node {
 		for (InetSocketAddress router : pendingRouters) {
 			if (router.getAddress().equals(content.header.getSrc())
 					&& router.getPort() == content.header.getSrcPort()) {
-				connectedRouters.put(content.getRouterName(),
+				connectedRouters.put(content.getRouterName().toUpperCase(),
 						(new InetSocketAddress(content.header.getSrc(), content.header.getSrcPort())));
 				pendingRouters.remove(router);
 				break;
@@ -157,7 +160,7 @@ public class Server extends Node {
 				+ content.header.getSrc().toString() + "\t" + packet.getAddress().toString() + ":" + packet.getPort()
 				+ "\t" + content.header.getSrc().toString() + ":" + content.header.getSrcPort());
 
-		connectedClients.put(content.header.getClientName(),
+		connectedClients.put(content.header.getClientName().toUpperCase(),
 				(new InetSocketAddress(content.header.getSrc(), content.header.getSrcPort())));
 
 		printConnectedClients();
@@ -176,15 +179,97 @@ public class Server extends Node {
 	}
 
 	private void onRecToType(DatagramPacket packet) {
-		// add family name as this.familyName
+		System.out.println("At onRecToType() in server " + familyName);
+
+		try {
+			ToTypeMessageContent content = (ToTypeMessageContent) PacketContent.fromDatagramPacket(packet);
+
+			/* if familyName is empty, packet is from a connectedClient */
+			if (content.header.getFamilyName().isEmpty()) {
+				content.header.setFamilyName(familyName);
+				/* Send packet to all clients in routing table */
+				for (RoutingTableEntry entry : routingTable) {
+					DatagramPacket forwardPacket = content.toDatagramPacket();
+					forwardPacket.setSocketAddress(entry.getNextHop());
+					socket.send(forwardPacket);
+				}
+			} else {
+				for (RoutingTableEntry entry : routingTable) {
+					if (entry.getDstName().toUpperCase().equals(content.header.getDstName().toUpperCase())) {
+						packet.setSocketAddress(entry.getNextHop());
+						socket.send(packet);
+						return;
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void onRecRegular(DatagramPacket packet) {
-		System.out.println("At onRecRegular() in server");
-		// if from a connected client, add dst IP and port. Then check below
-		// condition
-		// if client name is * and familyName == this.FamilyName, send to all
-		// connected clients
+		try {
+			System.out.println("At onRecRegular() in server " + familyName);
+
+			RegularMessageContent content = (RegularMessageContent) PacketContent.fromDatagramPacket(packet);
+			/*
+			 * If destination family name is this router, dst client is in
+			 * connectedClients
+			 */
+			if (content.getDstFamilyName().toUpperCase().equals(this.familyName.toUpperCase())) {
+				if (content.getDstClientName().length() <= 2 && content.getDstClientName().substring(0, 1).equals("*")) {
+					for (Map.Entry<String, InetSocketAddress> client : connectedClients.entrySet()) {
+						DatagramPacket forwardPacket = content.toDatagramPacket();
+						forwardPacket.setSocketAddress(client.getValue());
+					}
+				} else {
+					InetSocketAddress dst = connectedClients.get(content.getDstClientName().toUpperCase());
+					packet.setSocketAddress(dst);
+					socket.send(packet);
+					return;
+				}
+				// } else if (content.header.getFamilyName().isEmpty()) {
+				// /*
+				// * if familyName is empty, packet is from a connectedClient
+				// */
+				// content.header.setFamilyName(familyName);
+				// /*
+				// * Get dst IP address from routing table using dstName from
+				// * header and set IP in header
+				// */
+				// for (RoutingTableEntry entry : routingTable) {
+				// if
+				// (entry.getDstName().toUpperCase().equals(content.header.getDstName().toUpperCase()))
+				// {
+				// content.header.setDst(entry.getDstAddress().getAddress());
+				// // TODO: May not work \/
+				// packet.setSocketAddress(entry.getNextHop());
+				// socket.send(packet);
+				// return;
+				// }
+				// }
+			} else {
+				/*
+				 * Get socket address for next hop from routing table and
+				 * forward packet
+				 */
+				for (RoutingTableEntry entry : routingTable) {
+					if (entry.getDstName().toUpperCase().equals(content.header.getDstName().toUpperCase())) {
+						// if familyName is empty, packet is from a
+						// connectedClient
+						if (content.header.getFamilyName().isEmpty()) {
+							content.header.setFamilyName(familyName);
+							content.header.setDst(entry.getDstAddress().getAddress());
+						}
+						packet.setSocketAddress(entry.getNextHop());
+						socket.send(packet);
+						return;
+					}
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public synchronized void start() throws Exception {
