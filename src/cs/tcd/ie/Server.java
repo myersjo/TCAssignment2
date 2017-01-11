@@ -52,7 +52,7 @@ public class Server extends Node {
 			 * Change the next line to switch between DistanceVectorRouting and
 			 * LinkStateRouting
 			 */
-			routingProtocol = new DistanceVectorRouting(routingTable, connectedRouters, connectedClients);
+			routingProtocol = new DistanceVectorRouting(this, routingTable, connectedRouters, connectedClients);
 
 			listener.go();
 		} catch (java.lang.Exception e) {
@@ -183,11 +183,20 @@ public class Server extends Node {
 	}
 
 	private void onRecLsUpdate(DatagramPacket packet) {
-
+		PacketContent content = PacketContent.fromDatagramPacket(packet);
+		if (content.header.getDstName().toUpperCase().equals(this.familyName.toUpperCase())) {
+			routingProtocol.onReceipt(packet);
+		} else {
+			try {
+				sendContent(content);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	private void onRecDvUpdate(DatagramPacket packet) {
-
+		onRecLsUpdate(packet);
 	}
 
 	private void onRecToType(DatagramPacket packet) {
@@ -291,6 +300,47 @@ public class Server extends Node {
 			terminal.println("Waiting for contact");
 		}
 		this.wait();
+	}
+
+	/**
+	 * Sends the given packet from this router.
+	 * 
+	 * @param packet
+	 * @throws IOException
+	 */
+	public void sendPacket(DatagramPacket packet) throws IOException {
+		socket.send(packet);
+	}
+
+	/**
+	 * Sends the given packet, to the given socket address, from this router
+	 * 
+	 * @param packet
+	 * @param dst
+	 * @throws IOException
+	 */
+	public void sendPacket(DatagramPacket packet, InetSocketAddress dst) throws IOException {
+		packet.setSocketAddress(dst);
+		socket.send(packet);
+	}
+
+	/**
+	 * Creates a packet from content and uses the details in the content header
+	 * to send the packet from this router.
+	 * 
+	 * @param content
+	 * @throws IOException
+	 */
+	public void sendContent(PacketContent content) throws IOException {
+		DatagramPacket packet;
+		for (RoutingTableEntry entry : routingTable) {
+			if (entry.getDstName().toUpperCase().equals(content.header.getDstName().toUpperCase())) {
+				packet = content.toDatagramPacket();
+				packet.setSocketAddress(entry.getNextHop());
+				socket.send(packet);
+				return;
+			}
+		}
 	}
 
 	/**

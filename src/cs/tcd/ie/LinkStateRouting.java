@@ -1,17 +1,20 @@
 package cs.tcd.ie;
 
+import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class LinkStateRouting implements IRouting {
 
+	private Server router;
 	private ArrayList<RoutingTableEntry> routingTable;
 	private HashMap<String, InetSocketAddress> neighbours;
 	private HashMap<String, InetSocketAddress> clients;
 
-	public LinkStateRouting(ArrayList<RoutingTableEntry> routingTable,
+	public LinkStateRouting(Server router, ArrayList<RoutingTableEntry> routingTable,
 			HashMap<String, InetSocketAddress> neighbourRouters, HashMap<String, InetSocketAddress> connectedClients) {
+		this.router = router;
 		this.routingTable = routingTable;
 		this.neighbours = neighbourRouters;
 		this.clients = connectedClients;
@@ -22,6 +25,12 @@ public class LinkStateRouting implements IRouting {
 		// This method is called by the router(s)
 		// TODO: Implement. this.routingTable points to the same routingTable as
 		// that of the router - any changes here will update it for the router
+	}
+
+	@Override
+	public void onReceipt(DatagramPacket packet) {
+		// Called by the router when an update packet is received from another
+		// router.
 	}
 
 	public ArrayList<RoutingTableEntry> getRoutingTable() {

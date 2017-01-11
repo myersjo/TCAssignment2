@@ -1,5 +1,6 @@
 package cs.tcd.ie;
 
+import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 
@@ -8,6 +9,12 @@ public interface IRouting {
 	 * Called by a router to update its routing table.
 	 */
 	public void updateRoutingTable();
+	
+	/**
+	 * Called by the router when an update packet is received from another router.
+	 * @param packet
+	 */
+	public void onReceipt(DatagramPacket packet);
 
 	/**
 	 * Called by a router when its list of neighbours is updated.
