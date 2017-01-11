@@ -30,6 +30,8 @@ public class Server extends Node {
 
 	ArrayList<RoutingTableEntry> routingTable;
 
+	IRouting routingProtocol;
+
 	Server(Terminal terminal, String ownIP, int ownPort, String familyName, ArrayList<InetSocketAddress> neighbours) {
 		try {
 			this.terminal = terminal;
@@ -45,6 +47,13 @@ public class Server extends Node {
 			this.connectedRouters = new HashMap<String, InetSocketAddress>();
 			routingTable = new ArrayList<RoutingTableEntry>();
 			initialised = false;
+
+			/**
+			 * Change the next line to switch between DistanceVectorRouting and
+			 * LinkStateRouting
+			 */
+			routingProtocol = new DistanceVectorRouting(routingTable, connectedRouters, connectedClients);
+
 			listener.go();
 		} catch (java.lang.Exception e) {
 			e.printStackTrace();
@@ -116,6 +125,7 @@ public class Server extends Node {
 			}
 		}
 
+		routingProtocol.setNeighbours(connectedRouters);
 		printConnectedRouters();
 	}
 
@@ -146,6 +156,7 @@ public class Server extends Node {
 		System.out.println(replyPacket.getAddress().toString() + ":" + replyPacket.getPort());
 		socket.send(replyPacket);
 
+		routingProtocol.setNeighbours(connectedRouters);
 		printConnectedRouters();
 	}
 
@@ -163,6 +174,7 @@ public class Server extends Node {
 		connectedClients.put(content.header.getClientName().toUpperCase(),
 				(new InetSocketAddress(content.header.getSrc(), content.header.getSrcPort())));
 
+		routingProtocol.setClients(connectedClients);
 		printConnectedClients();
 	}
 
@@ -217,7 +229,8 @@ public class Server extends Node {
 			 * connectedClients
 			 */
 			if (content.getDstFamilyName().toUpperCase().equals(this.familyName.toUpperCase())) {
-				if (content.getDstClientName().length() <= 2 && content.getDstClientName().substring(0, 1).equals("*")) {
+				if (content.getDstClientName().length() <= 2
+						&& content.getDstClientName().substring(0, 1).equals("*")) {
 					for (Map.Entry<String, InetSocketAddress> client : connectedClients.entrySet()) {
 						DatagramPacket forwardPacket = content.toDatagramPacket();
 						forwardPacket.setSocketAddress(client.getValue());
@@ -242,7 +255,6 @@ public class Server extends Node {
 				// (entry.getDstName().toUpperCase().equals(content.header.getDstName().toUpperCase()))
 				// {
 				// content.header.setDst(entry.getDstAddress().getAddress());
-				// // TODO: May not work \/
 				// packet.setSocketAddress(entry.getNextHop());
 				// socket.send(packet);
 				// return;
@@ -328,9 +340,6 @@ public class Server extends Node {
 			}
 			System.out.println("************ ****************** ************");
 		}
-
-		// TODO: add neighbour routers to routing table
-		// TODO: initiate routing protocol
 	}
 
 	/**

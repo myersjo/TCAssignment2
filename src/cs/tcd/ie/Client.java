@@ -6,9 +6,7 @@ package cs.tcd.ie;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.DatagramPacket;
-import java.net.InetSocketAddress;
 import java.io.IOException;
-import java.lang.Byte;
 
 import tcdIO.*;
 
@@ -149,7 +147,7 @@ public class Client extends Node {
 				String[] clientMessageString = input.split("-", 2);
 				String client = clientMessageString[0].trim();
 				String[] clientNames = client.split(":", 2);
-				if (clientNames.length <2 || clientMessageString.length < 2) {
+				if (clientNames.length < 2 || clientMessageString.length < 2) {
 					terminal.println("Invalid input.\n" + getInstructions());
 					break;
 				}
@@ -158,8 +156,7 @@ public class Client extends Node {
 				String message = clientMessageString[1].trim();
 
 				PacketType packetType;
-//				System.out.println(familyName + ":" + clientName);
-				if ( familyName.length() <= 2 && familyName.substring(0, 1).equals("*")) {
+				if (familyName.length() <= 2 && familyName.substring(0, 1).equals("*")) {
 					packetType = PacketType.TO_TYPE;
 				} else
 					packetType = PacketType.REGULAR;
@@ -189,16 +186,14 @@ public class Client extends Node {
 				} else {
 					RegularMessageContent content = new RegularMessageContent();
 					content.header.setPacketType(packetType);
-//					System.out.println(packetType.toString());
 					content.header.setSrc(clientIP);
 					content.header.setSrcPort(clientPort);
 					content.header.setClientName(clientName);
-//					content.header.setFamilyName(familyName); set by router
 					content.header.setDstType(DeviceType.PC);
 					content.header.setDstName(client);
 					content.setDstClientName(clientName);
 					content.setDstFamilyName(familyName);
-					
+
 					content.setMessage(message);
 					DatagramPacket packet = content.toDatagramPacket();
 					packet.setAddress(routerIP);
@@ -219,8 +214,8 @@ public class Client extends Node {
 		}
 		this.send();
 	}
-	
-	private String getInstructions () {
+
+	private String getInstructions() {
 		String instructions = "To send a message to a user, enter the recipients name in the form \" [familyName] : [clientName] \", followed by \" - \" (without quotes). "
 				+ "\nTo send a message to all devices of a specific type, enter the type in the form \" * : [type] \" followed by \" - \" (without quotes)."
 				+ "\nTo send a message to all users associated with a router, enter the name in the form \" [familyName] : * \", followed by \" - \" (without quotes)";

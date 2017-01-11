@@ -6,23 +6,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-
-//public interface PacketContent {
-//	
-//	public static byte HEADERLENGTH = 10;
-//	public static byte PAYLOAD_LENGTH = 2;
-//	public static int SEQUENCE_NUMBER = 0;
-//	
-//	public String toString();
-//	public DatagramPacket toDatagramPacket();
-//}
 
 public abstract class PacketContent {
-	// public class PacketContent {
-	// static enum PacketType {
-	// REGULAR, TO_TYPE, DV_UPDATE, LS_UPDATE, PING, NEW_CLIENT
-	// };
 	class Header {
 		// type
 		private PacketType packetType;
@@ -60,19 +45,14 @@ public abstract class PacketContent {
 					packetType = PacketType.REGULAR;
 				}
 
-				// src = InetAddress.getByAddress((byte[]) oin.readObject());
 				src = InetAddress.getByName(oin.readUTF());
 				srcPort = oin.readInt();
 				clientName = oin.readUTF();
 				familyName = oin.readUTF();
-				// dst = InetAddress.getByAddress((byte[]) oin.readObject());
 				dst = InetAddress.getByName(oin.readUTF());
 
 				int dsType = oin.readInt();
-				if (dsType == DeviceType.CLIENT.ordinal()) { // TODO: Remove
-																// client type
-					dstType = DeviceType.CLIENT;
-				} else if (dsType == DeviceType.PC.ordinal()) {
+				if (dsType == DeviceType.PC.ordinal()) {
 					dstType = DeviceType.PC;
 				} else if (dsType == DeviceType.ROUTER.ordinal()) {
 					dstType = DeviceType.ROUTER;
@@ -174,7 +154,6 @@ public abstract class PacketContent {
 				oout.writeInt(packetType.ordinal());
 				if (src == null)
 					src = InetAddress.getByName("localhost");
-				// oout.write(src.getAddress());
 				oout.writeUTF(src.getHostAddress());
 				oout.writeInt(srcPort);
 				if (clientName == null)
@@ -185,7 +164,6 @@ public abstract class PacketContent {
 				oout.writeUTF(familyName);
 				if (dst == null)
 					dst = InetAddress.getByName("localhost");
-				// oout.write(dst.getAddress());
 				oout.writeUTF(dst.getHostAddress());
 				if (dstType == null)
 					dstType = DeviceType.PC;
@@ -281,7 +259,6 @@ public abstract class PacketContent {
 			} else {
 				content = null;
 			}
-			// TODO: Add additional packet types
 
 			oin.close();
 			bin.close();
