@@ -25,6 +25,11 @@ public class LinkStateRouting implements IRouting {
 		// This method is called by the router(s)
 		// TODO: Implement. this.routingTable points to the same routingTable as
 		// that of the router - any changes here will update it for the router
+		RoutingTableEntry.setSrcAddress();
+		this.routingTable = routingTable;
+		addDistance(routingTable);
+		RoutingTableEntry.getNextHop();
+		
 	}
 
 	@Override
@@ -57,4 +62,17 @@ public class LinkStateRouting implements IRouting {
 	public void setClients(HashMap<String, InetSocketAddress> clients) {
 		this.clients = clients;
 	}
+		
+	public int getDistance(){
+		Random rand = new Random();
+		int distance = rand.nextInt(10+1); //generate random distance
+		return distance;
+	}
+	
+	public void addDistance(ArrayList<RoutingTableEntry> routingTable){
+		this.routingTable = routingTable;
+		RoutingTableEntry.setCost(getDistance()); //put into array list
+	}
+	
+}
 }
