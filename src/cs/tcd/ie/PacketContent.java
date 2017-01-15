@@ -1,5 +1,7 @@
 package cs.tcd.ie;
-
+/**
+ * @Author Jordan Myers 
+ */
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;

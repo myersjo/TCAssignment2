@@ -1,5 +1,7 @@
 package cs.tcd.ie;
-
+/**
+ * @Author Jordan Myers 
+ */
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;

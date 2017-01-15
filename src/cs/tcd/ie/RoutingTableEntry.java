@@ -1,5 +1,7 @@
 package cs.tcd.ie;
-
+/**
+ * @Author Jordan Myers 
+ */
 import java.net.InetSocketAddress;
 import java.util.Random;
 

@@ -1,5 +1,7 @@
 package cs.tcd.ie;
-
+/**
+ * @Author Jordan Myers 
+ */
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -52,7 +54,7 @@ public class Server extends Node {
 			 * Change the next line to switch between DistanceVectorRouting and
 			 * LinkStateRouting
 			 */
-			routingProtocol = new TestRouting(this, routingTable, connectedRouters, connectedClients);
+			routingProtocol = new LinkStateRouting(this, routingTable, connectedRouters, connectedClients);
 
 			listener.go();
 		} catch (java.lang.Exception e) {

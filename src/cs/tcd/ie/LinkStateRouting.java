@@ -1,5 +1,7 @@
 package cs.tcd.ie;
-
+/**
+ * @Author Jordan Myers (base content)
+ */
 import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;

@@ -1,5 +1,5 @@
 /**
- * 
+ * @Author Jordan Myers
  */
 package cs.tcd.ie;
 
