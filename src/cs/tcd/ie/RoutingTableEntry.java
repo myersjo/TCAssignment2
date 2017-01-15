@@ -1,6 +1,7 @@
 package cs.tcd.ie;
 
 import java.net.InetSocketAddress;
+import java.util.Random;
 
 public class RoutingTableEntry {
 	private String dstName;
@@ -9,6 +10,20 @@ public class RoutingTableEntry {
 	private String srcName;
 	private InetSocketAddress srcAddress;
 	private int cost;
+
+	public RoutingTableEntry() {
+	}
+
+	public RoutingTableEntry(String dstName, InetSocketAddress dstAddress, InetSocketAddress nextHop, String srcName,
+			InetSocketAddress srcAddress) {
+		this.dstName = dstName;
+		this.dstAddress = dstAddress;
+		this.nextHop = nextHop;
+		this.srcName = srcName;
+		this.srcAddress = srcAddress;
+		Random generator = new Random();
+		this.cost = generator.nextInt(200);
+	}
 
 	public String getDstName() {
 		return dstName;

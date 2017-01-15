@@ -52,7 +52,7 @@ public class Server extends Node {
 			 * Change the next line to switch between DistanceVectorRouting and
 			 * LinkStateRouting
 			 */
-			routingProtocol = new DistanceVectorRouting(this, routingTable, connectedRouters, connectedClients);
+			routingProtocol = new TestRouting(this, routingTable, connectedRouters, connectedClients);
 
 			listener.go();
 		} catch (java.lang.Exception e) {
@@ -126,6 +126,7 @@ public class Server extends Node {
 		}
 
 		routingProtocol.setNeighbours(connectedRouters);
+		routingProtocol.updateRoutingTable();
 		printConnectedRouters();
 	}
 
@@ -157,6 +158,7 @@ public class Server extends Node {
 		socket.send(replyPacket);
 
 		routingProtocol.setNeighbours(connectedRouters);
+		routingProtocol.updateRoutingTable();
 		printConnectedRouters();
 	}
 
@@ -175,6 +177,7 @@ public class Server extends Node {
 				(new InetSocketAddress(content.header.getSrc(), content.header.getSrcPort())));
 
 		routingProtocol.setClients(connectedClients);
+		routingProtocol.updateRoutingTable();
 		printConnectedClients();
 	}
 
@@ -201,6 +204,9 @@ public class Server extends Node {
 
 	private void onRecToType(DatagramPacket packet) {
 		System.out.println("At onRecToType() in server " + familyName);
+		for (RoutingTableEntry routingTableEntry : routingTable) {
+			System.out.println(routingTableEntry.getDstName() + " " + routingTableEntry.getNextHop());
+		}
 
 		try {
 			ToTypeMessageContent content = (ToTypeMessageContent) PacketContent.fromDatagramPacket(packet);
