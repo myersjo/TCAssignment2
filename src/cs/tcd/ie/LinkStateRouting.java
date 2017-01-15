@@ -31,6 +31,7 @@ public class LinkStateRouting implements IRouting {
 	public void onReceipt(DatagramPacket packet) {
 		// Called by the router when an update packet is received from another
 		// router.
+		LSUpdateContent content = (LSUpdateContent) PacketContent.fromDatagramPacket(packet);
 	}
 
 	public ArrayList<RoutingTableEntry> getRoutingTable() {

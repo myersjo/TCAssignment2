@@ -31,6 +31,7 @@ public class DistanceVectorRouting implements IRouting {
 	public void onReceipt(DatagramPacket packet) {
 		// Called by the router when an update packet is received from another
 		// router.
+		DVUpdateContent content = (DVUpdateContent) PacketContent.fromDatagramPacket(packet);
 	}
 
 	public ArrayList<RoutingTableEntry> getRoutingTable() {
